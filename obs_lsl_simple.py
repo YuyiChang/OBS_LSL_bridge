@@ -57,7 +57,7 @@ def update_time():
 
         settings = obs.obs_data_create()
 
-        outlet.push_sample([curr_unix_ms], curr_unix)
+        outlet.push_sample([curr_unix_ms])
 
         obs.obs_data_set_string(settings, "text", f"{curr_unix_ms}")
         obs.obs_source_update(source, settings)
