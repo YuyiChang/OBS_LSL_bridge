@@ -4,35 +4,36 @@ import time
 
 # Global settings
 source_name = "MYOBS"
-# time_format = "%m/%d/%y %H:%M:%S"
-refresh_rate = 0.1  # Refresh every second
+refresh_rate = 0.1      # [sec]
+lsl_refresh_rate = 5    # [sec]
+curr_unix_ms = int(time.perf_counter_ns() * 1e-6)
 
 info = StreamInfo(name="OBS-Timestamp",
                   type="timestamp",
                   channel_count=1,
-                  nominal_srate=30,
+                  nominal_srate=1/lsl_refresh_rate,
                   channel_format='int32',
                   source_id='obs-ts')
 outlet = StreamOutlet(info)
 
 def script_description():
-    return "A script to overlay the current time on the screen in OBS."
+    return "A script to overlay the current time on the screen in OBS and push timestamp through LSL."
 
 def script_update(settings):
     """Update the settings when changed in the UI."""
-    global source_name, time_format, refresh_rate
+    global source_name, refresh_rate
     source_name = obs.obs_data_get_string(settings, "source_name")
-    # time_format = obs.obs_data_get_string(settings, "time_format")
-    refresh_rate = obs.obs_data_get_int(settings, "refresh_rate")
+    refresh_rate = obs.obs_data_get_double(settings, "refresh_rate")
 
     obs.timer_remove(update_time)  # Remove any existing timer
+    obs.timer_remove(update_lsl)
     if source_name:
-        obs.timer_add(update_time, refresh_rate * 1000)
+        obs.timer_add(update_time, int(refresh_rate * 1000))
+        obs.timer_add(update_lsl, lsl_refresh_rate * 1000)
 
 def script_defaults(settings):
     """Set default values for the script."""
     obs.obs_data_set_default_string(settings, "source_name", source_name)
-    # obs.obs_data_set_default_string(settings, "time_format", time_format)
     obs.obs_data_set_default_double(settings, "refresh_rate", refresh_rate)
 
 def script_properties():
@@ -40,13 +41,13 @@ def script_properties():
     props = obs.obs_properties_create()
 
     obs.obs_properties_add_text(props, "source_name", "Text Source Name", obs.OBS_TEXT_DEFAULT)
-    # obs.obs_properties_add_text(props, "time_format", "Time Format (strftime)", obs.OBS_TEXT_DEFAULT)
-    obs.obs_properties_add_float(props, "refresh_rate", "Refresh Rate (seconds)", 0.1, 60, 0.1)
+    # obs.obs_properties_add_int(props, "refresh_rate", "Refresh Rate (seconds)", 1, 60, 1)
 
     return props
 
 def update_time():
     """Update the text source with the current time."""
+    global curr_unix_ms
     if not source_name:
         return
 
@@ -57,10 +58,11 @@ def update_time():
 
         settings = obs.obs_data_create()
 
-        outlet.push_sample([curr_unix_ms])
-
         obs.obs_data_set_string(settings, "text", f"{curr_unix_ms}")
         obs.obs_source_update(source, settings)
         
         obs.obs_data_release(settings)
         obs.obs_source_release(source)
+
+def update_lsl():
+    outlet.push_sample([curr_unix_ms])
