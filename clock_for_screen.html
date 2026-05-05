@@ -13,7 +13,7 @@
       font-family: monospace;
       font-size: 48px;
       background: #000;
-      color: #0f0;
+      color: #fff;
     }
   </style>
 </head>
@@ -33,7 +33,7 @@
       const ms   = String(now.getMilliseconds()).padStart(3, '0');
 
       document.getElementById('clock').textContent =
-        `${yyyy}-${mm}-${dd} ${hh}:${min}:${ss}.${ms}`;
+        `${mm}/${dd}/${yyyy} ${hh}:${min}:${ss}.${ms}`;
     }
 
     updateClock();
