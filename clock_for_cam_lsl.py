@@ -41,7 +41,7 @@ def update_logic():
             outlet = StreamOutlet(info)
         
         # Push both pieces of data as a list of strings
-        outlet.push_sample([time_str, str(curr_unix_ms)], curr_unix_s)
+        outlet.push_sample([time_str, str(curr_unix_ms)])
         
         last_lsl_push_time = curr_unix_s
         print(f"[LSL PUSH] {time_str} | Unix: {curr_unix_ms}")
